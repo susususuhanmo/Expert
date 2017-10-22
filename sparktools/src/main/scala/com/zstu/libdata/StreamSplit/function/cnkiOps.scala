@@ -94,17 +94,23 @@ object cnkiOps {
     institution
   }
   def cleanInstitute(institute: String,removePostCode: RemovePostCode): String ={
-    val rtn = removePostCode.removePostCode(institute.replace("，",",").replace("|!",";"))
+    val rtn = RemovePostCodeNum.removePostCode(institute.replace("，",",").replace("|!",";"))
     def getStrBefore(str: String):String={
       if(str == null) null
       else {
-        if(rtn.indexOf(",") >=0) rtn.substring(0,rtn.indexOf(","))
-        else rtn
+        if(str.indexOf(",") >=0) str.substring(0,str.indexOf(","))
+        else str
       }
     }
     if(rtn == null) null
-    else
-      splitStr(rtn).map(getStrBefore(_).trim).reduce(_+";"+_)
+
+    else {
+      val rtnArray = splitStr(rtn)
+        .map(s =>RemoveCity.removeCity(s).trim)
+        .filter(s => s != "" && s != null)
+      if (rtnArray.isEmpty) null
+      else rtnArray.reduce(_ + ";" + _)
+    }
 
 
   }

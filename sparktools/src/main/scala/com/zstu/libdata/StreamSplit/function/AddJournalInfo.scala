@@ -1,8 +1,8 @@
-package com.zstu.libdata.StreamSplit.test
+package com.zstu.libdata.StreamSplit.function
 
 import java.io.PrintWriter
 
-import com.zstu.libdata.StreamSplit.function.deleteZero
+import com.zstu.libdata.StreamSplit.test.ParseUrl
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.hive.HiveContext
 import org.joda.time.DateTime
@@ -26,8 +26,8 @@ object AddJournalInfo {
   def addCoreIssnDatasource(allColumCoreData: DataFrame, originJournalData: DataFrame, hiveContext: HiveContext,resource:String): DataFrame = {
     originJournalData.registerTempTable("originJournal")
 
-    val coreData = allColumCoreData.select(resource.toUpperCase +"KEY", "ID", "ISSN", "DATASOURCE")
-      .withColumnRenamed("ID", "journalCoreId")
+    val coreData = allColumCoreData.select(resource.toUpperCase +"KEY", "ISSN", "DATASOURCE").withColumnRenamed(resource.toUpperCase+ "KEY","resourceKey")
+//      .withColumnRenamed("ID", "journalCoreId")
 
     logger.println("coreData" + coreData.count() + DateTime.now + "\r\n")
     logger.flush()
@@ -36,8 +36,8 @@ object AddJournalInfo {
     hiveContext.udf.register("getKey", (url: String, resource: String) => if (url != "" && url != null) ParseUrl.GetKey(url, resource) else null)
     hiveContext.udf.register("parseResource", (url: String) => ParseUrl.ParseResource(url))
     val parsedJournalData = hiveContext.sql("select *," +
-      "getKey(url,'"+ resource +"') as key," +
-      "1 as isCore " +
+      "getKey(url,'"+ resource +"') as key " +
+
       "from originJournal")
     matchData(parsedJournalData,coreData,resource,hiveContext)
   }
@@ -47,17 +47,20 @@ object AddJournalInfo {
     val filteredData = originData
     logger.println(resource + "Data" + filteredData.count() + DateTime.now + "\r\n")
     logger.flush()
-    val coreData =
-      resource match {
-        case "wf" =>   allCoreData.filter("WFKEY is not null")
-        case "vip" =>  allCoreData.filter("VIPKEY is not null")
-        case "cnki" => allCoreData.filter("CNKIKEY is not null")
-      }
-    resource match {
-      case "wf" => filteredData.join(coreData, filteredData("key") === coreData("WFKEY")).drop("WFKEY").drop("key")
-      case "vip" => filteredData.join(coreData, filteredData("key") === coreData("VIPKEY")).drop("VIPKEY").drop("key")
-      case "cnki" => filteredData.join(coreData, filteredData("key") === coreData("CNKIKEY")).drop("CNKIKEY").drop("key")
-    }
+
+
+
+    val coreData = allCoreData.filter("resourceKey is not null")
+
+
+    dealColumn(filteredData.join(coreData, filteredData("key") === coreData("resourceKey"),"left").drop("key"),hiveContext)
+
+
+  }
+  def dealColumn (inputData : DataFrame,hiveContext: HiveContext)={
+    inputData.registerTempTable("dealColumnData")
+    hiveContext.udf.register("judgeCore", (key: String) =>if(key != null) 1 else 0)
+    hiveContext.sql("select *,judgeCore(resourceKey) as isCore from dealColumnData").drop("resourceKey")
   }
 
 }

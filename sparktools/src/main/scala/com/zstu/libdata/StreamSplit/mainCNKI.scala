@@ -27,7 +27,6 @@ object mainCNKI {
     logUtil("clc" + clcRdd.count())
     logUtil("author" + authorRdd.count())
     logUtil("simpified" + simplifiedJournalRdd.count())
-    logUtil("Mag" + journalMagSourceRdd.count())
     //    while(true)
     //      {
     try {
@@ -39,7 +38,8 @@ object mainCNKI {
         .filter("status != 1 and status != 3 and year =2017")
         .limit(50000)
         .cache()
-      val removePostCode = new RemovePostCode(hiveContext)
+      val postArray = getData.getPostArray(hiveContext)
+      val removePostCode = new RemovePostCode(hiveContext,postArray)
       orgjournaldata.registerTempTable("t_orgjournaldataCNKI")
       val fullInputData = addCLCName(getData.getFullDataCNKIsql(hiveContext,removePostCode), clcRdd, hiveContext)
 

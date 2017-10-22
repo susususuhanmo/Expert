@@ -27,7 +27,7 @@ object mainVIP {
     logUtil("author" + authorRdd.count())
     logUtil("simpified" + simplifiedJournalRdd.count())
 
-    logUtil("Mag" + journalMagSourceRdd.count())
+
     //    while(true)
     //      {
     try
@@ -43,7 +43,8 @@ object mainVIP {
 
 
 
-      val removePostCode = new RemovePostCode(hiveContext)
+      val postArray = getData.getPostArray(hiveContext)
+      val removePostCode = new RemovePostCode(hiveContext,postArray)
       val fullInputData=  addCLCName(getData.getFullDataVIPsql(hiveContext,removePostCode),clcRdd,hiveContext)
 
 

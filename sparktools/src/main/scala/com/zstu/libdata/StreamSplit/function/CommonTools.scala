@@ -27,7 +27,6 @@ object CommonTools {
       ReplaceLastStr.ReplaceLastStr(
         str.trim.replace("；", separator)
           .replace(",", separator)
-          .replace(";", separator)
           .replace("，", separator)
           .replace("|!", separator), separator)
         .split(separator)

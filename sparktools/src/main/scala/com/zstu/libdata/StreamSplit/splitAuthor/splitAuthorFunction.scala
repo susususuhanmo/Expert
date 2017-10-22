@@ -419,6 +419,11 @@ object splitAuthorFunction {
       candidateResourceRdd.map(value => candidateResource(value._1, value._2, value._3))
     )
     writeDataLog("t_CandidateResourceLog", candidateResourceData)
+
+
+
+
+
     //    (paperId,name,organ,partOrgan,journal,isFirst,firstLevelOrgan
     // ,authorId,any:(keywordNew,keywordAltNew,subjectNew,paperId,journal))
 
@@ -441,6 +446,11 @@ object splitAuthorFunction {
       keyWordResultData("paperid") === yearData("id"), "left")
       .drop("id").drop("isCheck")
     writeDataLog("t_KeywordLog", keyWordResultDataWithYear)
+
+
+
+
+
     //    (paperId,name,organ,partOrgan,journal,isFirst,firstLevelOrgan
     // ,authorId,any:(keywordNew,keywordAltNew,subjectNew,paperId,journal))
 

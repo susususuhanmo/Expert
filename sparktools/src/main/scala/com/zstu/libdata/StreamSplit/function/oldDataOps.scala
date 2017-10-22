@@ -118,6 +118,9 @@ case class journalCoreJudge(journalName: String,isCore: Int)
 
     WriteData.writeDataLog("tmp_JournalLog",resultData)
 
+
+
+
 //    WriteData.writeDataDiscoveryV2("t_JournalLog",resultData
 //      .drop("candidateResources").drop("subject").filter("isCore = 1"))
     1

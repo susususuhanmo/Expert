@@ -487,6 +487,13 @@ object newDataOps {
     //    WriteData.writeDataStream("t_JournalLog",resultData)
 
     WriteData.writeDataLog("tmp_JournalLog", resultData)
+//    WriteData.writeDataLog("test_JournalLog", resultData)
+
+
+
+
+
+
     //    WriteData.writeDataDiscoveryV2("t_JournalLog",resultData
     //      .drop("candidateResources").drop("subject").filter("isCore = 1"))
 

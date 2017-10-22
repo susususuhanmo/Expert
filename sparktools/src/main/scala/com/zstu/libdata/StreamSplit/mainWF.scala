@@ -25,9 +25,7 @@ object mainWF {
     logUtil("clc" + clcRdd.count())
     logUtil("author" + authorRdd.count())
     logUtil("simpified" + simplifiedJournalRdd.count())
-    logUtil("Mag" + journalMagSourceRdd.count())
-    //    while(true)
-    //      {
+
     try {
 
 
@@ -45,12 +43,13 @@ object mainWF {
       logUtil("简化后的数据" + simplifiedInputRdd.count())
 
 
-      WriteData.writeErrorData(repeatedRdd,types,hiveContext)
-      logUtil("重复数据写入" + repeatedRdd.count())
-      val removePostCode = new RemovePostCode(hiveContext)
+
+      val postArray = getData.getPostArray(hiveContext)
+      logUtil("邮编数组读取完毕" + postArray.length)
+      val removePostCode = new RemovePostCode(hiveContext,postArray)
       val fullInputData = addCLCName(getData.getFullDataWFsql(hiveContext,removePostCode),clcRdd,hiveContext)
 
-
+      logUtil("fullInputData读取完毕" + fullInputData.count)
 
 
 
@@ -67,7 +66,7 @@ object mainWF {
       val (rightInputRdd,errorRdd) = getRightRddAndReportError(simplifiedInputRdd, hiveContext)
       logUtil("正常数据" + rightInputRdd.count())
 
-      WriteData.writeErrorData(errorRdd,types,hiveContext)
+
 
 
 
@@ -93,12 +92,14 @@ object mainWF {
       //处理旧数据
 
 
-      val num = oldDataOps.dealOldData(fullInputData, types, inputJoinJournalRdd
-        , hiveContext)
+      val num = oldDataOps.dealOldData(fullInputData, types, inputJoinJournalRdd, hiveContext)
       logUtil("匹配成功的旧数据处理成功" + num)
       logUtil("---------")
       val logData = hiveContext.sql("select GUID as id,"+types+" as resource from t_orgjournaldataWF")
       WriteData.writeDataWangzhihong("t_Log",logData)
+      WriteData.writeErrorData(repeatedRdd,types,hiveContext)
+      WriteData.writeErrorData(errorRdd,types,hiveContext)
+      logUtil("重复数据写入" + repeatedRdd.count())
       hiveContext.dropTempTable("t_orgjournaldataWF")
     } catch {
       case ex: Exception => logUtil(ex.getMessage)
