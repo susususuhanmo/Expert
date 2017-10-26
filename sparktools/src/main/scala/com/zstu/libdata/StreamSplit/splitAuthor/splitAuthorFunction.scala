@@ -2,7 +2,7 @@ package com.zstu.libdata.StreamSplit.splitAuthor
 
 import com.github.stuxuhai.jpinyin.{PinyinFormat, PinyinHelper}
 import com.zstu.libdata.StreamSplit.function.CommonTools._
-import com.zstu.libdata.StreamSplit.function.Filter
+import com.zstu.libdata.StreamSplit.function.{AddStatus, Filter}
 import com.zstu.libdata.StreamSplit.function.WriteData.writeDataLog
 import com.zstu.libdata.StreamSplit.function.getFirstLevelOrgan.getFirstLevelOrgan
 import com.zstu.libdata.StreamSplit.function.keywordsOps.isNull
@@ -404,12 +404,12 @@ object splitAuthorFunction {
     writeDataLog("t_PaperAuthorLog", paperAuthorData)
     val paperAuthorId = paperAuthorData.select("authorId")
 
-    val finalAuthorData = resultAuthorData.join(paperAuthorId,
+    val finalAuthorDataWithoutStatus = resultAuthorData.join(paperAuthorId,
       resultAuthorData("id") === paperAuthorId("authorId"), "left")
       .filter("authorId is not null")
       .drop("authorId")
       .distinct()
-
+val finalAuthorData = AddStatus.addStatus(finalAuthorDataWithoutStatus,hiveContext)
     writeDataLog("tmp_ExpertLog", finalAuthorData)
 
 

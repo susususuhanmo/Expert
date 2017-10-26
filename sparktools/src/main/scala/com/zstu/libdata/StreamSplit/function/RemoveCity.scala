@@ -23,13 +23,18 @@ object RemoveCity {
     if(str == null) return null
     var rtn = str.replace(","," ")
     val strPartArray = rtn.split(" ")
-   val resultStrPartArray = strPartArray.filter( !isCity(_))
-    resultStrPartArray.reduce(_+" "+_)
+   val resultStrPartArray = strPartArray
+     .filter( !isCity(_))
+     .filter(s => s != "" && s != null)
+
+    if (resultStrPartArray.isEmpty) null
+    else resultStrPartArray.reduce(_+" "+_)
+
   }
 
   def main(args: Array[String]): Unit = {
 
-println(removeCity(RemovePostCodeNum.removePostCode("武汉钢铁公司第二职工医院药学部,武汉,430085")))
+println(removeCity(RemovePostCodeNum.removePostCode("广东深圳")))
   }
 
 }

@@ -106,7 +106,8 @@ object cnkiOps {
 
     else {
       val rtnArray = splitStr(rtn)
-        .map(s =>RemoveCity.removeCity(s).trim)
+        .filter(s => s != "" && s != null)
+        .map(s =>RemoveCity.removeCity(s))
         .filter(s => s != "" && s != null)
       if (rtnArray.isEmpty) null
       else rtnArray.reduce(_ + ";" + _)
