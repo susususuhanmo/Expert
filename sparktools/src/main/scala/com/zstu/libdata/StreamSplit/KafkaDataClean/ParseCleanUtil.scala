@@ -305,7 +305,8 @@ object ParseCleanUtil {
         val regex =
           """([0-9]{4})年第([0-9A-Za-z]+)期 ([\S\s]+)页,共([\S\s]+)页""".r
         val regex(issue_year, issue_term, issue_page_start, issue_total) = issue
-        val array: Array[String] = Array(issue_year, issue_term, issue_page_start , issue_total).map(_.trim)
+        val array: Array[String] = Array(issue_year, null,issue_term, issue_page_start , issue_total)
+          .map(str => if(str == null) null else str.trim)
         array
 
     }

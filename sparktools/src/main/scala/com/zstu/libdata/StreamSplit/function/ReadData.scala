@@ -57,16 +57,31 @@ object ReadData {
     val data = hiveContext.read.format("jdbc").options(option).load()
     data
   }
-  def readDataCERSv4(tableName: String, hiveContext: HiveContext): DataFrame = {
+  def readData160(database:String,tableName: String, hiveContext: HiveContext): DataFrame = {
 
-    val sqlUrl = "jdbc:sqlserver://192.168.1.160:1433;DatabaseName=CERSv4;"
+    val sqlUrl = "jdbc:sqlserver://192.168.1.160:1433;DatabaseName="+database+";"
     val option = Map("url" -> sqlUrl, "user" -> "fzj", "password" -> "fzj@zju", "dbtable" -> tableName,
       "driver" -> "com.microsoft.sqlserver.jdbc.SQLServerDriver")
     val data = hiveContext.read.format("jdbc").options(option).load()
     data
   }
+//  def readDataCERSv4(tableName: String, hiveContext: HiveContext): DataFrame = {
+//
+//    val sqlUrl = "jdbc:sqlserver://192.168.1.160:1433;DatabaseName=CERSv4;"
+//    val option = Map("url" -> sqlUrl, "user" -> "fzj", "password" -> "fzj@zju", "dbtable" -> tableName,
+//      "driver" -> "com.microsoft.sqlserver.jdbc.SQLServerDriver")
+//    val data = hiveContext.read.format("jdbc").options(option).load()
+//    data
+//  }
 
+def read196LogData(tableName: String, hiveContext: HiveContext): DataFrame = {
 
+  val sqlUrl = "jdbc:sqlserver://192.168.1.196:1433;DatabaseName=Log;"
+  val option = Map("url" -> sqlUrl, "user" -> "shm", "password" -> "shm@zju", "dbtable" -> tableName,
+    "driver" -> "com.microsoft.sqlserver.jdbc.SQLServerDriver")
+  val data = hiveContext.read.format("jdbc").options(option).load()
+  data
+}
   def readData165(tableName: String, hiveContext: HiveContext): DataFrame = {
 
     val sqlUrl = "jdbc:sqlserver://192.168.1.165:1433;DatabaseName=WangZhihong;"

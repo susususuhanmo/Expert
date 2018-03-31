@@ -23,8 +23,12 @@ object cnkiOps {
 
 
   def getFirstCreator(author: String): String = {
-    if(author == null )null
-    else {author.split(";")(0)}
+    if(author == null)null
+    else {
+      val authorArray = author.split(";")
+      if(authorArray.length == 0) null
+      else authorArray(0)
+    }
 
   }
 
@@ -34,15 +38,16 @@ object cnkiOps {
     * @return
     */
   def cleanAuthor(author: String): String = {
-    if(hasNoChinese(author)) return author.replace("|!",";")
+    if(author == null) return null
+    if(hasNoChinese(author)) return author.replace("|!",";").replace("@@","")
 
-    var author_tmp = deleteInvisibleChar.deleteInvisibleChar(author.toString)
-      .replace("@@","")
-    author_tmp=  GetReplacedStr.GetReplacedStrOld(author_tmp)
-    var creators: Array[String] = author_tmp.split("\\|!")
-    if (creators.length ==1){
-      creators  = author_tmp.split("\\;;")
-    }
+    val author_tmp = deleteInvisibleChar.deleteInvisibleChar(author.toString)
+      .replace("@@","").replace("|!",";")
+    if(author_tmp == "") return null
+    val creators: Array[String] = author_tmp.split(";")
+
+
+  if(creators.isEmpty) return null
     var creator = ""
     for (i <- creators.indices) {
       val eachCreator = creators(i).trim()
@@ -51,13 +56,17 @@ object cnkiOps {
         creator += ""
       }else{
         val tmp: Array[String] = eachCreator.toString.split("\\[")
-        var creator_temp = tmp(0)
-        creator_temp = DeleteCharIfIsLastNum.DeleteCharIfIsLastNum(creator_temp)
-        creator += creator_temp + ""
+        if(tmp.isEmpty) creator += ""
+        else {
+          var creator_temp = tmp(0)
+          creator_temp = DeleteCharIfIsLastNum.DeleteCharIfIsLastNum(creator_temp)
+          creator += creator_temp + ";"
+        }
+
       }
     }
     //把末尾的“；”去掉
-    //creator = creator.substring(0, creator.lastIndexOf(";"))
+    creator = creator.substring(0, creator.lastIndexOf(";"))
     creator
   }
 
@@ -77,23 +86,51 @@ object cnkiOps {
     }
   }
 
-  /**
-    * 清洗机构字段
-    *
-    * @param institute
-    * @return
-    */
-  def cleanInstituteOld(institute: String): String = {
-    val institutions: Array[String] = deleteInvisibleChar.deleteInvisibleChar(institute).split("\\|!")
-    var institution = ""
-    for (i <- institutions.indices) {
-      val eachInstitution = institutions(i).trim()
-      institution += eachInstitution + ";"
+  def cleanTitleForMatch(title: String): String = {
+    if(title == null) null
+    else {
+      var value = deleteInvisibleChar.deleteInvisibleChar(title)
+      //标准化处理 统一处理成大写
+      value = value.toUpperCase
+      GetReplacedStr.GetReplacedStr(value)
     }
-    institution = institution.substring(0, institution.lastIndexOf(";"))
-    institution
   }
-  def cleanInstitute(institute: String,removePostCode: RemovePostCode): String ={
+
+  //  def  cleanInstitute(institute: String): String = {
+  //    def getStrBefore(str: String): String = {
+  //      if (str == null) null
+  //      else {
+  //        if (str.indexOf(",") >= 0) str.substring(0, str.indexOf(","))
+  //        else str
+  //      }
+  //    }
+  //    if(institute == null) null
+  //    else {
+  //      val rtn = institute.replace("，", ",").replace("|!", ";")
+  //        val rtnArray = splitStr(rtn).map(getStrBefore(_).trim).filter(s => s != "" && s != null)
+  //        if (rtnArray.isEmpty) null
+  //        else rtnArray.reduce(_ + ";" + _)
+  //    }
+  //
+  //  }
+
+  def isCnChar(ch: Char): Boolean = if(ch < 19968 || ch >19968+20901)  false else  true
+  def isEnCHar(ch: Char) : Boolean = if((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) true else false
+  def isNum(ch: Char) : Boolean = if(ch >= '0' && ch <= '9') true else false
+  def removeChacter(str: String) : String ={
+    if(str == null) return null
+    var rtn = str;
+    if(!isEnCHar(rtn(0)) && !isCnChar(rtn(0)) && !isNum(rtn(0)))
+      rtn = rtn.substring(1)
+
+    val tail = rtn.length - 1
+    if(tail<0) return null
+    if(!isEnCHar(rtn(tail)) && !isCnChar(rtn(tail)) && !isNum(rtn(tail)))
+      rtn = rtn.substring(0,tail )
+    rtn
+  }
+  def cleanInstitute(institute: String): String ={
+    if(institute == null) return null
     val rtn = RemovePostCodeNum.removePostCode(institute.replace("，",",").replace("|!",";"))
     def getStrBefore(str: String):String={
       if(str == null) null
@@ -110,12 +147,11 @@ object cnkiOps {
         .map(s =>RemoveCity.removeCity(s))
         .filter(s => s != "" && s != null)
       if (rtnArray.isEmpty) null
-      else rtnArray.reduce(_ + ";" + _)
+      else removeChacter(rtnArray.reduce(_ + ";" + _))
     }
 
 
   }
-
   def getFirstInstitute(institute: String): String = {
     if(institute == null) null
     else {
@@ -123,6 +159,11 @@ object cnkiOps {
       else null
     }
   }
+
+
+
+
+
 
   /**
     * 清洗关键字字段
@@ -151,11 +192,13 @@ object cnkiOps {
     if (journals == null) {
       return null
     }
-      journals = deleteInvisibleChar.deleteInvisibleChar(journal)
-      journals = GetReplacedStr.GetReplacedStr(journals)
-      journals
+    journals = deleteInvisibleChar.deleteInvisibleChar(journal)
+    journals = GetReplacedStr.GetReplacedStr(journals)
+    journals
 
   }
+
+
   /**
     * 获取中文期刊名
     *
@@ -177,8 +220,12 @@ object cnkiOps {
 
 
   def main(args: Array[String]): Unit = {
-  //  2016年第0卷第1期 9-页,共1页
-//  println(cleanInstitute("223900,江苏省泗洪县人民医院骨科|!215006,苏州大学附属第一医院骨科"))
+    //  2016年第0卷第1期 9-页,共1页
+    var a : String = null
+    println(a.split(';')(0))
+
+
+    //    adat
   }
 
 

@@ -4,6 +4,7 @@ import com.zstu.libdata.StreamSplit.function._
 import com.zstu.libdata.StreamSplit.function.getData._
 import com.zstu.libdata.StreamSplit.function.newDataOps.dealNewData0623
 import com.zstu.libdata.StreamSplit.function.printLog.logUtil
+import com.zstu.libdata.StreamSplit.test.keywordSplit
 import org.apache.spark.sql.hive.HiveContext
 
 //import com.zstu.libdata.StreamSplit.function.oldDataOps.dealOldData
@@ -18,15 +19,7 @@ object mainCNKI {
 
   def main(hiveContext: HiveContext): Unit = {
 
-    val types = 2
-    var (clcRdd, authorRdd, simplifiedJournalRdd, journalMagSourceRdd, universityData)
-    = readSourceRdd(hiveContext)
 
-
-    logUtil("数据读取完成")
-    logUtil("clc" + clcRdd.count())
-    logUtil("author" + authorRdd.count())
-    logUtil("simpified" + simplifiedJournalRdd.count())
     //    while(true)
     //      {
     try {
@@ -35,17 +28,37 @@ object mainCNKI {
       //    (key, (title, journal, creator, id, institute,year))
 
       val orgjournaldata = commonClean.readDataOrg("t_CNKI_UPDATE", hiveContext)
-        .filter("status != 1 and status != 3 and year =2017")
+        .filter("status!=2&&status!=6&&status!=10&&status!=14")
+//          .filter("year = 2017")
         .limit(50000)
         .cache()
+
+
       val postArray = getData.getPostArray(hiveContext)
       val removePostCode = new RemovePostCode(hiveContext,postArray)
       orgjournaldata.registerTempTable("t_orgjournaldataCNKI")
-      val fullInputData = addCLCName(getData.getFullDataCNKIsql(hiveContext,removePostCode), clcRdd, hiveContext)
+      val yearFilter = "(" + hiveContext.sql("select distinct year from t_orgjournaldataCNKI")
+        .map(r => "year = " + r.getString(r.fieldIndex("year"))).collect().reduce(_ + " or "+ _) + ")"
 
+
+      val types = 2
+      var (clcRdd, authorRdd, simplifiedJournalRdd,universityData)
+      = readSourceRdd(hiveContext,yearFilter)
+
+
+      logUtil("数据读取完成")
+      logUtil("clc" + clcRdd.count())
+      logUtil("author" + authorRdd.count())
+      logUtil("simpified" + simplifiedJournalRdd.count())
+
+
+
+      val fullInputData = addCLCName(getData.getFullDataCNKIsql(hiveContext,removePostCode), clcRdd, hiveContext)
+      //对所有数据的关键词进行拆分和写入
+      keywordSplit.keywordSplitAll(fullInputData,hiveContext)
 
       val (simplifiedInputRdd, repeatedRdd) =
-        distinctRdd.distinctInputRdd(orgjournaldata.map(f => commonClean.transformRdd_cnki_simplify(f)))
+        distinctRdd.distinctInputRdd(orgjournaldata.map(f => commonOps.transformRdd_cnki_simplify(f)))
 
       // val simplifiedInputRdd =getSimplifiedInputRdd(CNKIData)
       logUtil("简化后的数据" + simplifiedInputRdd.count())
@@ -58,7 +71,7 @@ object mainCNKI {
       logUtil("待拆分的数据" + forSplitRdd.count())
 
 
-      //      logUtil("完整字段数据" + fullInputRdd.count())
+
 
 
       //过滤出正常数据并将错误数据反馈
@@ -78,8 +91,8 @@ object mainCNKI {
       //处理新数据 得到新的journal大表 和 新作者表
       val newAuthorRdd =
         dealNewData0623(fullInputData
-          , journalMagSourceRdd, simplifiedJournalRdd, types, inputJoinJournalRdd
-          , authorRdd, clcRdd, hiveContext, forSplitRdd, universityData)
+          , simplifiedJournalRdd, types, inputJoinJournalRdd
+          , authorRdd, clcRdd, hiveContext, forSplitRdd,universityData)
       logUtil("新数据处理成功获得新数据")
 
 
@@ -103,7 +116,7 @@ object mainCNKI {
 
       val logData = hiveContext.sql("select GUID as id," + types + " as resource from t_orgjournaldataCNKI")
       logUtil("写入Log表" + logData.count())
-      WriteData.writeDataWangzhihong("t_Log", logData)
+      WriteData.writeDataWangzhihong("t_Log196", logData)
     } catch {
       case ex: Exception => logUtil(ex.getMessage)
     }

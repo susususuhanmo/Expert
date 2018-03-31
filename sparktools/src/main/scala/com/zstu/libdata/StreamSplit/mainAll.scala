@@ -23,36 +23,88 @@ object mainAll {
   var finishedVIP = false
   var finishedWF = false
   var dayCount = 0
-  var todayRun = Array("VIP", "WF", "CNKI")
+  var todayRun = Array("WF", "CNKI", "VIP")
 
+
+  var runMode = "All"
+  var runTime = 19
+  var runDataCount =5000
 
   def main(args: Array[String]) {
     val hiveContext = initSpark("mainALL")
-    //        run("CNKI",hiveContext)
-    //    run("VIP",hiveContext)
+
+
+
+    val inputPara = args.filter(a => a != "")
+
+
+    logger.println("运行模式："+(if(runMode == "ALL") "循环定时运行" else "单独运行"+runMode))
+    logger.println("开始时间："+(if(runTime >=0) runTime+":00" else "立刻运行"))
+    logger.println("运行数量："+runDataCount)
+    logger.flush()
+//            run("CNKI",hiveContext)
+//        run("VIP",hiveContext)
         run("WF",hiveContext)
 
+/***********************以下内容为计时循环运行代码*****************************/
+    while (true) {
+      val runSource = refreshDate(hiveContext)
+      if (runSource != null) {
+        while (DateTime.now().hourOfDay().get() != runTime) {
+          Thread.sleep(1000 * 60 * 59)
+        }
+        if(latestTaskComplete(hiveContext)){
+          run(runSource, hiveContext)
+        }else{
+          //如果前一天任务未处理完成，今日不运行程序，第二天再接着运行。
+          if(dayCount == 0) dayCount =2 else dayCount -= 1
+        }
+      }
+    }
+/**********************************************************************/
 
-//    while (true) {
-//
-//
-//      val runSource = refreshDate(hiveContext)
-//      if (runSource != null) {
-//        while (DateTime.now().hourOfDay().get() != 15) {
-//          Thread.sleep(1000 * 60 * 59)
-//        }
-//        if(latestTaskComplete(hiveContext)){
-//          run(runSource, hiveContext)
-//        }else{
-//          //如果前一天任务未完成，则倒回一天，明天继续执行
-//          if(dayCount == 0) dayCount =2 else dayCount -= 1
-//        }
-//
-//
-//      }
-//    }
+
+
+
   }
 
+
+  def parsePara(inputPara:Array[String]) ={
+    inputPara.length match {
+      case 1 =>{
+        //只输入一个参数，其他参数为默认。
+        //例如 ./main.sh ALL 即为循环运行，19点定时，每次5000
+        //再如 ./main.sh CNKI 为单独运行CNKI,立刻运行，数量5000
+        runMode = inputPara(0).toUpperCase
+        if(runMode != "ALL") runTime = -1
+      }
+      case 2 => {
+        //只输入两个参数，其他参数为默认。
+        //例如 ./main.sh ALL 17 即为循环运行，17点定时，每次5000
+        //再如 ./main.sh CNKI 2000 为单独运行CNKI,立刻运行，数量2000
+        runMode = inputPara(0).toUpperCase
+        if(runMode == "ALL")
+        {
+          runTime = inputPara(1).toInt
+        }else {
+          runTime = -1
+          runDataCount = inputPara(1).toInt
+        }
+      }
+      case 3 =>{
+        //输入三个参数。
+        //例如 ./main.sh ALL 17 1500 即为循环运行，17点定时，每次1500
+        //再如 ./main.sh CNKI 12 2000 为单独运行CNKI,下一个12点开始，数量2000
+        runMode = inputPara(0).toUpperCase
+        runTime = inputPara(1).toInt
+        runDataCount = inputPara(2).toInt
+      }
+      case _ =>{
+        logger.println("未输入参数按默认参数运行")
+        logger.flush()
+      }
+    }
+  }
   def latestTaskComplete(hiveContext: HiveContext): Boolean = {
     val uncheckNum = ReadData.readDataLog("tmp_ExpertLog", hiveContext).filter("isCheck = 0").count()
     if (uncheckNum == 0) {

@@ -1,19 +1,63 @@
-
-
-
-
-
-
-
-
- //    if( title!="" && title !=null) title = cnkiClean.cleanTitle( title)
-    //    if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(creator))
-    //    if(creatorAlt !="" && creatorAlt !=null) creatorAlt = cnkiClean.cleanAuthor(creatorAlt)
-    //    if(creatorAll !="" && creatorAll !=null) creatorAll = cnkiClean.cleanAuthor(creatorAll)
-    //    if(keyWord !="" && keyWord !=null) keyWord = cnkiClean.cleanKeyWord(keyWord)
-    //    if(keyWordAlt !="" && keyWordAlt !=null) keyWordAlt = cnkiClean.cleanKeyWord(keyWordAlt)
-    //    if( instituteAll!="" && instituteAll !=null) instituteAll = cnkiClean.cleanInstitute(instituteAll)
-    //    if( journal!="" && journal !=null) journal = cnkiClean.cleanJournal(journal)
-    //    if( institute!="" && institute !=null) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    //    if(abstractcont !="" && abstractcont !=null) abstractcont = cnkiClean.getChineseAbstract(abstractcont)
-    //    if(abstractcont_alt !="" && abstractcont_alt !=null) abstractcont_alt = cnkiClean.getEnglishAbstract(abstractcont_alt)
+1 TALIP
+ACM Transactions on Asian Language
+Information Processing
+ACM http://dblp.uni-trier.de/db/journals/talip/
+2 Applied Intelligence Springer http://dblp.uni-trier.de/db/journals/apin/
+3 AIM Artificial Intelligence in Medicine Elsevier http://dblp.uni-trier.de/db/journals/artmed/
+4 Artificial Life MIT Press http://dblp.uni-trier.de/db/journals/alife/
+6 Computational Intelligence Wiley http://dblp.uni-trier.de/db/journals/ci/
+7 Computer Speech and Language Elsevier http://dblp.uni-trier.de/db/journals/csl/
+8 Connection Science Taylor & Francis http://dblp.uni-trier.de/db/journals/connection/
+9 DSS Decision Support Systems Elsevier http://dblp.uni-trier.de/db/journals/dss/
+10 EAAI
+Engineering Applications of Artificial
+Intelligence
+Elsevier http://dblp.uni-trier.de/db/journals/eaai/
+11 Expert Systems Blackwell/Wiley http://dblp.uni-trier.de/db/journals/es/
+12 ESWA Expert Systems with Applications Elsevier http://dblp.uni-trier.de/db/journals/eswa/
+13 Fuzzy Sets and Systems Elsevier http://dblp.uni-trier.de/db/journals/fss/
+14 T-CIAIG
+IEEE Transactions on Computational
+Intelligence and AI in Games
+IEEE http://dblp.uni-trier.de/db/journals/tciaig/
+15 IET-CVI IET Computer Vision IET http://digital-library.theiet.org/content/journals/iet-cvi
+16 IET Signal Processing IET * http://digital-library.theiet.org/content/journals/iet-spr
+17 IVC Image and Vision Computing Elsevier http://dblp.uni-trier.de/db/journals/ivc/
+18 IDA Intelligent Data Analysis Elsevier http://dblp.uni-trier.de/db/journals/ida/
+19 IJCIA
+International Journal of Computational
+Intelligence and Applications
+World Scientific http://dblp.uni-trier.de/db/journals/ijcia/
+20 IJDAR
+International Journal on Document
+Analysis and Recognition
+Springer http://dblp.uni-trier.de/db/journals/ijdar/
+21 IJIS
+International Journal of Intelligent
+Systems
+Wiley http://dblp.uni-trier.de/db/journals/ijis/
+22 IJNS International Journal of Neural Systems World Scientific http://dblp.uni-trier.de/db/journals/ijns/
+23 IJPRAI
+International Journal of Pattern
+Recognition and Artificial Intelligence
+World Scientific http://dblp.uni-trier.de/db/journals/ijprai/
+24
+International Journal of Uncertainty,
+Fuzziness and KBS
+World Scientific http://dblp.uni-trier.de/db/journals/ijcia/
+25 JETAI
+Journal of Experimental and Theoretical
+Artificial Intelligence
+Taylor & Francis http://dblp.uni-trier.de/db/journals/jetai/
+26 KBS Knowledge-Based Systems Elsevier http://dblp.uni-trier.de/db/journals/kbs/
+27 Machine Translation Springer http://dblp.uni-trier.de/db/journals/mt/
+28 Machine Vision and Applications Springer http://dblp.uni-trier.de/db/journals/mva/
+29 Natural Computing Springer http://dblp.uni-trier.de/db/journals/nc/
+30 NLE Natural Language Engineering Cambridge University http://dblp.uni-trier.de/db/journals/nle/
+31 NCA Neural Computing & Applications Springer http://dblp.uni-trier.de/db/journals/nca/
+32 NPL Neural Processing Letters Springer http://dblp.uni-trier.de/db/journals/npl/
+33 Neurocomputing Elsevier http://dblp.uni-trier.de/db/journals/ijon/
+34 PAA Pattern Analysis and Applications Springer http://dblp.uni-trier.de/db/journals/paa/
+35 PRL Pattern Recognition Letters Elsevier http://dblp.uni-trier.de/db/journals/prl/
+36 Soft Computing Springer http://dblp.uni-trier.de/db/journals/soco/
+37 WIAS Web Intelligence and Agent Systems IOS Press http://dblp.uni-trier.de/db/journals/wias/

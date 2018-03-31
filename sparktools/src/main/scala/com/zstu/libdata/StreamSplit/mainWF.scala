@@ -6,6 +6,7 @@ import com.zstu.libdata.StreamSplit.function._
 import com.zstu.libdata.StreamSplit.kafka.commonClean
 import com.zstu.libdata.StreamSplit.splitAuthor.getCLC.addCLCName
 import com.zstu.libdata.StreamSplit.function.printLog.logUtil
+import com.zstu.libdata.StreamSplit.test.keywordSplit
 import org.apache.spark.sql.hive.HiveContext
 
 /**
@@ -16,30 +17,32 @@ object mainWF {
 
   def main(hiveContext:HiveContext): Unit = {
 
-    val types = 8
-    var (clcRdd, authorRdd, simplifiedJournalRdd, journalMagSourceRdd, universityData)
-    = readSourceRdd(hiveContext)
 
 
-    logUtil("数据读取完成")
-    logUtil("clc" + clcRdd.count())
-    logUtil("author" + authorRdd.count())
-    logUtil("simpified" + simplifiedJournalRdd.count())
+
 
     try {
 
 
       val orgjournaldata = commonClean.readDataOrg("t_WF_UPDATE", hiveContext)
-        .filter("status != 1 and status != 3 and year =2017").limit(50000).cache()
+        .filter("status!=2&&status!=6&&status!=10&&status!=14").limit(50000).cache()
+//        .filter("year = 2017")
       orgjournaldata.registerTempTable("t_orgjournaldataWF")
-
-
+      val yearFilter = "(" + hiveContext.sql("select distinct year from t_orgjournaldataWF")
+        .map(r => "year = " + r.getString(r.fieldIndex("year"))).collect().reduce(_ + " or "+ _) + ")"
+      val types = 8
+      var (clcRdd, authorRdd, simplifiedJournalRdd, universityData)
+      = readSourceRdd(hiveContext,yearFilter)
+      logUtil("数据读取完成")
+      logUtil("clc" + clcRdd.count())
+      logUtil("author" + authorRdd.count())
+      logUtil("simpified" + simplifiedJournalRdd.count())
 
 
       logUtil("全部数据" + orgjournaldata.count())
 
       val (simplifiedInputRdd,repeatedRdd) =
-        distinctRdd.distinctInputRdd(orgjournaldata.map(f => commonClean.transformRdd_wf_simplify(f)))
+        distinctRdd.distinctInputRdd(orgjournaldata.map(f => commonOps.transformRdd_wf_simplify(f)))
       logUtil("简化后的数据" + simplifiedInputRdd.count())
 
 
@@ -48,7 +51,8 @@ object mainWF {
       logUtil("邮编数组读取完毕" + postArray.length)
       val removePostCode = new RemovePostCode(hiveContext,postArray)
       val fullInputData = addCLCName(getData.getFullDataWFsql(hiveContext,removePostCode),clcRdd,hiveContext)
-
+      //对所有数据的关键词进行拆分和写入
+      keywordSplit.keywordSplitAll(fullInputData,hiveContext)
       logUtil("fullInputData读取完毕" + fullInputData.count)
 
 
@@ -80,7 +84,7 @@ object mainWF {
       //处理新数据 得到新的journal大表 和 新作者表
       val newAuthorRdd =
         dealNewData0623( fullInputData
-          , journalMagSourceRdd, simplifiedJournalRdd, types,inputJoinJournalRdd
+          , simplifiedJournalRdd, types,inputJoinJournalRdd
           , authorRdd, clcRdd, hiveContext, forSplitRdd, universityData)
       logUtil("新数据处理成功获得新数据")
 
@@ -96,7 +100,7 @@ object mainWF {
       logUtil("匹配成功的旧数据处理成功" + num)
       logUtil("---------")
       val logData = hiveContext.sql("select GUID as id,"+types+" as resource from t_orgjournaldataWF")
-      WriteData.writeDataWangzhihong("t_Log",logData)
+      WriteData.writeDataWangzhihong("t_Log196",logData)
       WriteData.writeErrorData(repeatedRdd,types,hiveContext)
       WriteData.writeErrorData(errorRdd,types,hiveContext)
       logUtil("重复数据写入" + repeatedRdd.count())

@@ -3,6 +3,7 @@ package com.zstu.libdata.StreamSplit
 import com.zstu.libdata.StreamSplit.function.getData.{getForSplitRdd, getRightRddAndReportError, readSourceRdd}
 import com.zstu.libdata.StreamSplit.function.newDataOps.dealNewData0623
 import com.zstu.libdata.StreamSplit.function._
+import com.zstu.libdata.StreamSplit.test.keywordSplit
 import org.apache.spark.sql.hive.HiveContext
 
 //import com.zstu.libdata.StreamSplit.function.oldDataOps.dealOldData
@@ -17,15 +18,7 @@ object mainVIP {
 
   def main(hiveContext:HiveContext): Unit = {
 
-    val types = 4
-    var (clcRdd, authorRdd, simplifiedJournalRdd, journalMagSourceRdd,universityData)
-    = readSourceRdd(hiveContext)
 
-
-    logUtil("数据读取完成")
-    logUtil("clc" + clcRdd.count())
-    logUtil("author" + authorRdd.count())
-    logUtil("simpified" + simplifiedJournalRdd.count())
 
 
     //    while(true)
@@ -37,20 +30,31 @@ object mainVIP {
       //    (key, (title, journal, creator, id, institute,year))
 
       val orgjournaldata = commonClean.readDataOrg("t_VIP_UPDATE", hiveContext)
-        .filter("status != 1 and status != 3 and year =2017").limit(50000).cache()
+        .filter("status!=2&&status!=6&&status!=10&&status!=14").limit(50000).cache()
+
       orgjournaldata.registerTempTable("t_orgjournaldataVIP")
+      val yearFilter = "(" + hiveContext.sql("select distinct year from t_orgjournaldataVIP")
+        .map(r => "year = " + r.getString(r.fieldIndex("year"))).collect().reduce(_ + " or "+ _) + ")"
+
+      val types = 4
+      var (clcRdd, authorRdd, simplifiedJournalRdd,universityData)
+      = readSourceRdd(hiveContext,yearFilter)
 
 
-
+      logUtil("数据读取完成")
+      logUtil("clc" + clcRdd.count())
+      logUtil("author" + authorRdd.count())
+      logUtil("simpified" + simplifiedJournalRdd.count())
 
       val postArray = getData.getPostArray(hiveContext)
       val removePostCode = new RemovePostCode(hiveContext,postArray)
       val fullInputData=  addCLCName(getData.getFullDataVIPsql(hiveContext,removePostCode),clcRdd,hiveContext)
-
+      //对所有数据的关键词进行拆分和写入
+      keywordSplit.keywordSplitAll(fullInputData,hiveContext)
 
 
       val (simplifiedInputRdd,repeatedRdd) =
-        distinctRdd.distinctInputRdd(orgjournaldata.map(f =>commonClean.transformRdd_vip_simplify(f)))
+        distinctRdd.distinctInputRdd(orgjournaldata.map(f =>commonOps.transformRdd_vip_simplify(f)))
 
 
       WriteData.writeErrorData(repeatedRdd,types,hiveContext)
@@ -62,35 +66,6 @@ object mainVIP {
       logUtil("简化后的数据" + simplifiedInputRdd.count())
       val forSplitRdd =getForSplitRdd(fullInputData,removePostCode)
       logUtil("待拆分的数据" + forSplitRdd.count())
-
-//      val fullInputRdd  =
-//        orgjournaldata.map(f =>commonClean.transformRdd_vip_source(f))
-
-
-      // TODO: ....................
-      //      val fullInputRdd2  =
-      //        orgjournaldata.map(f =>getData.transformRdd_cnki_source(f))
-
-      //      val fullInputData = addCLCName(hiveContext.createDataFrame(fullInputRdd2)
-      //      .withColumnRenamed("abstractcont","abstract")
-      //      .withColumnRenamed("abstract_alt","abstractAlt"),clcRdd,hiveContext)
-
-
-
-      // TODO: ....................
-
-
-
-
-
-
-
-
-
-
-      // val fullInputRdd = getFullInputRdd(CNKIData)
-//      logUtil("完整字段数据" + fullInputRdd.count())
-
 
       //过滤出正常数据并将错误数据反馈
       val (rightInputRdd,errorRdd) = getRightRddAndReportError(simplifiedInputRdd, hiveContext)
@@ -108,7 +83,7 @@ object mainVIP {
 
       val newAuthorRdd =
         dealNewData0623( fullInputData
-          , journalMagSourceRdd, simplifiedJournalRdd, types,inputJoinJournalRdd
+          , simplifiedJournalRdd, types,inputJoinJournalRdd
           , authorRdd, clcRdd, hiveContext, forSplitRdd, universityData)
       logUtil("新数据处理成功获得新数据")
 
@@ -124,7 +99,7 @@ object mainVIP {
         , hiveContext)
       logUtil("匹配成功的旧数据处理成功" + num)
       val logData = hiveContext.sql("select GUID as id,"+types+" as resource from t_orgjournaldataVIP")
-      WriteData.writeDataWangzhihong("t_Log",logData)
+      WriteData.writeDataWangzhihong("t_Log196",logData)
       hiveContext.dropTempTable("t_orgjournaldataVIP")
     }catch {
       case ex: Exception => logUtil(ex.getMessage)

@@ -43,7 +43,7 @@ object getData {
       else str.replace("|!", ";")
     }
 
-    hiveContext.udf.register("cleanInstitute", (str: String) => if (str != "" && str != null) cnkiOps.cleanInstitute(str,removePostCode) else null)
+    hiveContext.udf.register("cleanInstitute", (str: String) => if (str != "" && str != null) cnkiOps.cleanInstitute(str) else null)
     hiveContext.udf.register("cutStr", (str: String, len: Int) => if (str != "" && str != null) cutStr(str, len) else null)
     hiveContext.udf.register("getChineseJournal", (str1: String, str2: String) => getChineseJournal(str1, str2))
 
@@ -68,7 +68,7 @@ object getData {
     //todo  中文期刊名和英文期刊名的区分
     val originData = hiveContext.sql("select " +
       "GUID as id,year,deleteZero(issue) as issue,url,deleteZero(page) as page,subject as classifications,cutStr(DOI,500) as DOI," +
-      "cutStr(cleanTitle(title),4000) as title," +
+      "cutStr(title,4000) as title," +
       "cutStr(getFirstCreator(cleanAuthor(creator)),2000) as creator," +
       "cutStr(cleanAuthor(cleanSplitChar(creator_all)),4000) as creatorAlt," +
       "cutStr(cleanAuthor(creator),2000) as creatorAll," +
@@ -77,14 +77,13 @@ object getData {
       "cutStr(cleanInstitute(institute),4000) as instituteAll," +
       "cutStr(getFirstInstitute(cleanInstitute(institute)),4000) as institute," +
       "cutStr(getChineseJournal(journal,journal2),2000) as journal," +
-
       "cutStr(getChineseAbstract(abstract),4000) as abstract," +
       "cutStr(getEnglishAbstract(abstract),4000) as abstractAlt " +
       "from t_orgjournaldataCNKI " +
       //      " where status = 0 and year = \'2017\'" +
       "")
     val coredData = ReadData.readData50("DiscoveryV3", "t_JournalCore", hiveContext)
-    AddJournalInfo.addCoreIssnDatasource(coredData, originData, hiveContext,"wf")
+    AddJournalInfo.addCoreIssnDatasource(coredData, originData, hiveContext,"cnki")
   }
 
   def chooseNotNull(str1: String, str2: String): String = {
@@ -107,7 +106,7 @@ object getData {
     }
 
 
-    hiveContext.udf.register("cleanInstitute", (str: String) => if (str != "" && str != null) cnkiOps.cleanInstitute(str,removePostCode) else null)
+    hiveContext.udf.register("cleanInstitute", (str: String) => if (str != "" && str != null) cnkiOps.cleanInstitute(str) else null)
     hiveContext.udf.register("cleanSplitChar", (str: String) => if (str != "" && str != null) cleanSplitChar(str) else null)
 
     hiveContext.udf.register("chooseNotNull", (str1: String, str2: String) => chooseNotNull(str1, str2))
@@ -133,13 +132,13 @@ object getData {
       "getPage(issue) as page," +
       "getIssue(issue) as issue," +
       "getVolume(issue) as volume," +
-      "cleanTitle(title) as title," +
+      "title as title," +
       "myClean(title_alt) as titleAlt," +
       "getFirstCreator(cleanAuthor(creator_2)) as creator," +
       "cleanSplitChar(cleanAuthor(creator_all)) as creatorAlt," +
       "cleanAuthor(creator_2) as creatorAll," +
       "cleanKeyWord(keyword) as keyWord," +
-      "cleanKeyWord('') as keyWordAlt," +
+      "cleanKeyWord(keyword_alt) as keyWordAlt," +
       "cleanInstitute(institute_2) as instituteAll," +
       "getFirstInstitute(cleanInstitute(institute_2)) as institute," +
       "chooseNotNull(journal_name,journal_2) as journal," +
@@ -149,7 +148,7 @@ object getData {
       //      " where status = 0 and year = \'2017\'" +
       "")
     val coredData = ReadData.readData50("DiscoveryV3", "t_JournalCore", hiveContext)
-    AddJournalInfo.addCoreIssnDatasource(coredData, originData, hiveContext,"wf")
+    AddJournalInfo.addCoreIssnDatasource(coredData, originData, hiveContext,"vip")
   }
 
 
@@ -165,7 +164,7 @@ object getData {
       else str.replace("|!", ";")
     }
 
-    hiveContext.udf.register("cleanInstitute", (str: String) => if (str != "" && str != null) cnkiOps.cleanInstitute(str,removePostCode) else null)
+    hiveContext.udf.register("cleanInstitute", (str: String) => if (str != "" && str != null) cnkiOps.cleanInstitute(str) else null)
     hiveContext.udf.register("myClean", (str: String) => if (str != "" && str != null) myClean(str) else null)
 
     hiveContext.udf.register("cleanSplitChar", (str: String) => if (str != "" && str != null) cleanSplitChar(str) else null)
@@ -192,7 +191,7 @@ object getData {
       //      "getPage(issue) as page," +
       "getIssue(issue) as issue," +
       "getVolume(issue) as volume," +
-      "cleanTitle(title) as title," +
+      "title as title," +
       "myClean(title_alt) as titleAlt," +
       "getFirstCreator(cleanAuthor(creator)) as creator," +
       "cleanSplitChar(cleanAuthor(creator_all)) as creatorAlt," +
@@ -220,11 +219,11 @@ object getData {
     * @return (CLCRdd,authorRdd,simplifiedJournalRdd,sourceCoreRdd,journalMagSourceRdd)
     *
     */
-  def readSourceRdd(hiveContext: HiveContext) = {
+  def readSourceRdd(hiveContext: HiveContext,yearFilter: String) = {
     val CLCRdd = getCLCRdd(hiveContext)
 
 
-    val authorRdd: RDD[((String, String), Any)] = ReadData.readDataCERSv4("t_CandidateExpert", hiveContext)
+    val authorRdd: RDD[((String, String), Any)] = ReadData.read196LogData("t_CandidateExpert", hiveContext)
       .map(row =>
         ((row.getString(row.fieldIndex("name"))
           , cutStr(row.getString(row.fieldIndex("organization")), 4)),
@@ -233,15 +232,20 @@ object getData {
             row.getString(row.fieldIndex("keyword")),
             null)
         ))
-    val universityData = readDataLog("t_University2015", hiveContext)
+    val universityData = ReadData.read196LogData("tmp_University2015", hiveContext)
       .select("name", "province", "area", "english")
       .withColumnRenamed("english", "altOrganization")
       .withColumnRenamed("name", "university")
       .withColumnRenamed("area", "city")
 
     //    [CERSv4].[dbo].[t_UnionResource]
-    val simplifiedJournalRdd = ReadData.readDataCERSv4("t_UnionResource", hiveContext)
-      .filter("year >= 2016 and resourceCode = 'J'")
+//    val simplifiedJournalRdd = ReadData.readDataCERSv4("t_UnionResource", hiveContext)
+//      .filter("resourceCode = 'J'and " + yearFilter)
+//      .map(f => transformRdd(f))
+
+
+    val simplifiedJournalRdd = ReadData.read196LogData("t_UnionResource", hiveContext)
+      .filter("resourceCode = 'J'and " + yearFilter)
       .map(f => transformRdd(f))
 
     //    val simplifiedJournalRdd =  readDataLog("t_UnionResource2016", hiveContext)
@@ -251,25 +255,25 @@ object getData {
 
 //    val sourceCoreRdd = readDataLog("t_JournalCore", hiveContext)
 //      .map(f => f.getString(f.fieldIndex("name")))
-    val journalMagSourceRdd = readDataLog("t_JournalMag", hiveContext)
-      .map(f => (f.getString(f.fieldIndex("MAGTITLE")), f.getString(f.fieldIndex("DATASOURCE"))))
-    (CLCRdd, authorRdd, simplifiedJournalRdd, journalMagSourceRdd, universityData)
+//    val journalMagSourceRdd = ReadData.read196LogData("t_JournalMag", hiveContext)
+//      .map(f => (f.getString(f.fieldIndex("MAGTITLE")), f.getString(f.fieldIndex("DATASOURCE"))))
+    (CLCRdd, authorRdd, simplifiedJournalRdd,universityData)
   }
 def getPostArray(hiveContext: HiveContext): Array[String] ={
   ReadData.readDataLog("t_PCode",hiveContext).map(row => row.getString(row.fieldIndex("pCode")))
     .filter(code => code !="" && code != null).collect()
 }
   def getCoreData(hiveContext: HiveContext) = {
-    val sourceCoreData = readDataLog("t_JournalCore", hiveContext)
+    val sourceCoreData = ReadData.read196LogData("t_JournalCore", hiveContext)
     sourceCoreData.select("name", "isCore").withColumnRenamed("name", "journalName")
   }
 
-  def getMagData(hiveContext: HiveContext) = {
-    val journalMagSourceRdd = readDataLog("t_JournalMag", hiveContext)
-      .select("MAGTITLE", "DATASOURCE")
-    journalMagSourceRdd.withColumnRenamed("MAGTITLE", "journalName")
-      .withColumnRenamed("DATASOURCE", "datasource")
-  }
+//  def getMagData(hiveContext: HiveContext) = {
+//    val journalMagSourceRdd = ReadData.read196LogData("t_JournalMag", hiveContext)
+//      .select("MAGTITLE", "DATASOURCE")
+//    journalMagSourceRdd.withColumnRenamed("MAGTITLE", "journalName")
+//      .withColumnRenamed("DATASOURCE", "datasource")
+//  }
 
   /**
     *
@@ -393,7 +397,7 @@ def getPostArray(hiveContext: HiveContext): Array[String] ={
     if (keyWord != "" && keyWord != null) keyWord = cnkiClean.cleanKeyWord(keyWord)
     if (keyWordAlt != "" && keyWordAlt != null) keyWordAlt = cnkiClean.cleanKeyWord(keyWordAlt)
     if (instituteAll != "" && instituteAll != null) instituteAll = cnkiClean.cleanInstitute(instituteAll)
-    if (journal != "" && journal != null) journal = cnkiClean.cleanJournal(journal)
+    if (journal != "" && journal != null) journal = cnkiOps.cleanJournal(journal)
     if (institute != "" && institute != null) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
     if (abstractcont != "" && abstractcont != null) abstractcont = cnkiClean.getChineseAbstract(abstractcont)
     if (abstractcont_alt != "" && abstractcont_alt != null) abstractcont_alt = cnkiClean.getEnglishAbstract(abstractcont_alt)

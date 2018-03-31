@@ -34,7 +34,7 @@ object RemoveCity {
 
   def main(args: Array[String]): Unit = {
 
-println(removeCity(RemovePostCodeNum.removePostCode("广东深圳")))
+cityArray.foreach(println)
   }
 
 }

@@ -29,6 +29,6 @@ authorData.registerTempTable("AddStatusAuthorData")
   }
 
   def main(args: Array[String]): Unit = {
-    println(isEnCHar('a'))
+    println(getStatus("上海市堤防(泵闸)设施管理处"))
   }
 }

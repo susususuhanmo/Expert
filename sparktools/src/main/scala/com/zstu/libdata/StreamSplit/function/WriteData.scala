@@ -37,7 +37,16 @@ object WriteData {
     dataFrame.write.mode(SaveMode.Append).jdbc(sqlUrl, tableName, connectProperties)
 
   }
+  def writeData160(dataBase : String,tableName: String,dataFrame: DataFrame): Unit = {
+    //设置好连接属性用于写数据
+    val connectProperties = new Properties()
+    connectProperties.put("user", "fzj")
+    connectProperties.put("password", "fzj@zju")
+    Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance()
+    val sqlUrl = "jdbc:sqlserver://192.168.1.160:1433;DatabaseName="+dataBase+";"
+    dataFrame.write.mode(SaveMode.Append).jdbc(sqlUrl, tableName, connectProperties)
 
+  }
   def writeDataDiscovery(tableName: String,dataFrame: DataFrame,hiveContext: HiveContext): Unit = {
     //设置好连接属性用于写数据
     val connectProperties = new Properties()
@@ -65,6 +74,16 @@ object WriteData {
     connectProperties.put("password", "fzj@zju")
     Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance()
     val sqlUrl = "jdbc:sqlserver://192.168.1.160:1433;DatabaseName=Log;"
+    dataFrame.write.mode(SaveMode.Append).jdbc(sqlUrl, tableName, connectProperties)
+
+  }
+  def writeDataLog196(tableName: String, dataFrame: DataFrame): Unit = {
+    //设置好连接属性用于写数据
+    val connectProperties = new Properties()
+    connectProperties.put("user", "shm")
+    connectProperties.put("password", "shm@zju")
+    Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver").newInstance()
+    val sqlUrl = "jdbc:sqlserver://192.168.1.196:1433;DatabaseName=Log;"
     dataFrame.write.mode(SaveMode.Append).jdbc(sqlUrl, tableName, connectProperties)
 
   }
@@ -184,7 +203,7 @@ object WriteData {
       errorData(value._1,value._2,types)
     ))
 
-    dataFrame.write.mode(SaveMode.Append).jdbc(sqlUrl, "t_Error", connectProperties)
+    dataFrame.write.mode(SaveMode.Append).jdbc(sqlUrl, "t_Error196", connectProperties)
 
   }
   case class matchedDataColumnName(cadalid: String, otherid: String, subject: String, isbn: String,

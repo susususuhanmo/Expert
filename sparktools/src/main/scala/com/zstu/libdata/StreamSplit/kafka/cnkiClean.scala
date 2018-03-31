@@ -232,6 +232,7 @@ object cnkiClean {
     * @return
     */
   def cleanKeyWord(keys: String): String = {
+    if(keys==null) return null
     val keyWords: Array[String] = deleteInvisibleChar.deleteInvisibleChar(keys).split("\\|!")
     var keyWord = ""
     for (i <- 0 to keyWords.length - 1) {
@@ -248,25 +249,7 @@ object cnkiClean {
     * @param journal
     * @return
     */
-  def cleanJournal(journal: String): String = {
-    var journals = journal
-    val ischinese = 2
-    if(ischinese == 2){//中文
-      journals = deleteInvisibleChar.deleteInvisibleChar(journal)
 
-      journals = GetReplacedStr.GetReplacedStr(journals)
-      if (journals == null) {
-        return null
-      }
-    }
-    journals
-    /*val result = CheckChinese.CheckChinese(journals)
-    if (result == 1) {
-      return null
-    } else {
-      journals
-    }*/
-  }
   /**
     * 获取中文期刊名
     *
@@ -289,12 +272,12 @@ object cnkiClean {
 
 
   def main(args: Array[String]): Unit = {
-  //  2016年第0卷第1期 9-页,共1页
-//    val str = "2016年第8期 8-8页,共1页"
-//    val array:Array[String]=ParseCleanUtil.cleanVipIssue(str);
-//    for(i <- 0 to array.length-1)
-//      println(array(i))
-    println(cleanJournal("浙江大学学报：工学版" ))
+    //  2016年第0卷第1期 9-页,共1页
+    //    val str = "2016年第8期 8-8页,共1页"
+    //    val array:Array[String]=ParseCleanUtil.cleanVipIssue(str);
+    //    for(i <- 0 to array.length-1)
+    //      println(array(i))
+    //    println(cleanJournal("光电子．激光" ))
   }
 
 

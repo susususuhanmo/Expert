@@ -149,240 +149,9 @@ object commonClean {
     (key, (title, journal, creator, id,institute,year))
   }
 
-  def transformRdd_cnki_simplify(r:Row) ={
-    val id = r.getString(r.fieldIndex("GUID"))
-    var creator =r.getString(r.fieldIndex("creator"))
-    var title=r.getString(r.fieldIndex("title"))
 
 
-    //todo journal 和 originalJournal 分开处理
-    var journal =r.getString(r.fieldIndex("journal"))
-    var journal2 =r.getString(r.fieldIndex("journal2"))
-    journal = getData.getChineseJournal(journal,journal2)
-    journal =cnkiOps.cleanJournal(journal)
-    val year=r.getString(r.fieldIndex("year"))
-    var institute =r.getString(r.fieldIndex("institute"))
-    var issue = deleteZero.deleteZero(r.getString(r.fieldIndex("issue")))
-    var volume = null
-    if( title!="" && title !=null ) title = cnkiClean.cleanTitle(title.toUpperCase)
-    if( journal !="" && journal !=null) journal = cnkiClean.cleanJournal(journal)
-    if(institute !="" && institute !=null){
-      //logUtil("--"+r.getString(r.fieldIndex("institute")))
-      institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    }
-    if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(creator))
-    val key = cutStr(title, 6) + cutStr(journal, 4)
 
-    (key, (title, journal, creator, id,institute,year,issue,volume))
-  }
-
-  def transformRdd_cnki_source(r:Row) ={
-
-    val id = r.getString(r.fieldIndex("GUID"))
-    var title =r.getString(r.fieldIndex("title"))
-    val titleAlt = ""
-    var creator = r.getString(r.fieldIndex("creator"))
-    var creatorAlt = r.getString(r.fieldIndex("creator_all"))
-    var creatorAll = r.getString(r.fieldIndex("creator"))
-    var keyWord = r.getString(r.fieldIndex("keyword"))
-    var keyWordAlt =""
-    var instituteAll = r.getString(r.fieldIndex("institute"))
-    val year = r.getString(r.fieldIndex("year"))
-    var journal =r.getString(r.fieldIndex("journal"))
-    var institute =r.getString(r.fieldIndex("institute"))
-    val issue = r.getString(r.fieldIndex("issue"))
-    val url = r.getString(r.fieldIndex("url"))
-    var abstractcont =  r.getString(r.fieldIndex("abstract"))
-    var abstractcont_alt = r.getString(r.fieldIndex("abstract"))
-    val page = r.getString(r.fieldIndex("page"))
-    val subject = r.getString(r.fieldIndex("subject"))
-    var doi = r.getString(r.fieldIndex("DOI"))
-    if(doi == null) doi = ""
-    var issn = r.getString(r.fieldIndex("ISSN"))
-    if(issn == null) issn = ""
-
-    if( title!="" && title !=null) title = cnkiClean.cleanTitle( title)
-    if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(creator))
-    if(creatorAlt !="" && creatorAlt !=null) creatorAlt = cnkiClean.cleanAuthor(creatorAlt)
-    if(creatorAll !="" && creatorAll !=null) creatorAll = cnkiClean.cleanAuthor(creatorAll)
-    if(keyWord !="" && keyWord !=null) keyWord = cnkiClean.cleanKeyWord(keyWord)
-    if(keyWordAlt !="" && keyWordAlt !=null) keyWordAlt = cnkiClean.cleanKeyWord(keyWordAlt)
-    if( instituteAll!="" && instituteAll !=null) instituteAll = cnkiClean.cleanInstitute(instituteAll)
-    if( journal!="" && journal !=null) journal = cnkiClean.cleanJournal(journal)
-    if( institute!="" && institute !=null) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    if(abstractcont !="" && abstractcont !=null) abstractcont = cnkiClean.getChineseAbstract(abstractcont)
-    if(abstractcont_alt !="" && abstractcont_alt !=null) abstractcont_alt = cnkiClean.getEnglishAbstract(abstractcont_alt)
-    //logUtil("---abstractcont-"+abstractcont)
-    //logUtil("---abstractcont_alt-"+abstractcont_alt)
-
-    (id, (id, title, titleAlt, creator, creatorAlt, creatorAll, keyWord, keyWordAlt, institute, instituteAll, year, journal, issue, url,abstractcont,abstractcont_alt,page,subject,doi,issn))
-  }
-  def transformRdd_vip_simplify(r:Row) ={
-    val id = r.getString(r.fieldIndex("GUID"))
-    var creator =r.getString(r.fieldIndex("creator_2"))
-    var title=r.getString(r.fieldIndex("title"))
-    var journal =r.getString(r.fieldIndex("journal_name"))
-    var journal2 =r.getString(r.fieldIndex("journal_2"))
-    val year=r.getString(r.fieldIndex("year"))
-    var institute =r.getString(r.fieldIndex("institute_2"))
-    var issue = r.getString(r.fieldIndex("issue"))
-
-    var volume = deleteZero.deleteZero(getData.getVolumeVIP(issue))
-    issue = deleteZero.deleteZero(getData.getIssueVIP(issue))
-    //logUtil("------" +id)
-    try{
-      if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanVipAuthor(creator,false))
-    }catch{
-      case ex: Exception => logUtil("---transformRdd_vip_simplify, clean author error，错误原因为---" + ex.getMessage)
-        logUtil("------" +id+"-----"+creator)
-    }
-
-    if( title!="" && title !=null ) title = cnkiClean.cleanTitle(title.toUpperCase)
-    if( journal !="" && journal !=null) journal = cnkiClean.cleanJournal(journal)
-    if( journal2 !="" && journal2 !=null) journal2 = cnkiClean.cleanJournal(journal2)
-    if (journal == null || journal.equals(""))     journal = journal2
-    journal = cnkiOps.cleanJournal(journal)
-    if(institute !="" && institute !=null)      institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    val key = cutStr(title, 6) + cutStr(journal, 4)
-    (key, (title, journal, creator, id,institute,year,issue,volume))
-  }
-
-  def transformRdd_vip_source(r:Row) ={
-    val id = r.getString(r.fieldIndex("GUID"))
-    var title =r.getString(r.fieldIndex("title"))
-    val titleAlt = r.getString(r.fieldIndex("title_alt"))
-    var creator = r.getString(r.fieldIndex("creator_2"))
-    var creatorAlt = r.getString(r.fieldIndex("creator_all"))
-    var creatorAll = r.getString(r.fieldIndex("creator_2"))
-    if(creatorAll == null || creatorAll.equals("")){
-      creatorAll = creator
-    }
-    var keyWord = r.getString(r.fieldIndex("keyword"))
-    var keyWordAlt = r.getString(r.fieldIndex("keyword_alt"))
-    var instituteAll = r.getString(r.fieldIndex("institute_2"))
-    val year = r.getString(r.fieldIndex("year"))
-    var journal =r.getString(r.fieldIndex("journal_name"))
-    var journal2 =r.getString(r.fieldIndex("journal_2"))
-    var institute =r.getString(r.fieldIndex("institute_2"))
-    val issue = r.getString(r.fieldIndex("issue"))
-    val url = r.getString(r.fieldIndex("url"))
-    var abstractcont =  r.getString(r.fieldIndex("abstract"))
-    var abstractcont_alt = r.getString(r.fieldIndex("abstract"))
-    val page = ""
-    val subject =r.getString(r.fieldIndex("subject_2"))
-    var doi = ""
-    val issn = ""
-
-//    logUtil("------" +id)
-//    var printauthorflag = false
-//    if(id =="FAC024F6-C622-4CF2-87BA-3AB974C14BEE") {
-//      printauthorflag = true
-//      logUtil("------------FAC024F6-C622-4CF2-87BA-3AB974C14BEE：  " + printauthorflag + "---------------")
-//    }
-
-
-    try{
-      if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanVipAuthor(creator,false))
-      if(creatorAlt !="" && creatorAlt !=null) creatorAlt = cnkiClean.cleanVipAuthor(creatorAlt,false)
-      if(creatorAll !="" && creatorAll !=null) creatorAll = cnkiClean.cleanVipAuthor(creatorAll,false)
-      //如果creatorAll是英文，则放到creatorAlt中
-      if(cnkiClean.filterEnglishStr(creatorAll) !=""){
-        creatorAlt = cnkiClean.filterEnglishStr(creatorAll)
-        creatorAll = ""
-      }
-    }catch{
-      case ex: Exception => logUtil("---transformRdd_vip_source. clean author error，错误原因为---" + ex.getMessage)
-        logUtil("------" +id+"-----"+creator)
-    }
-    if( title!="" && title !=null) title = cnkiClean.cleanTitle( title)
-    if(keyWord !="" && keyWord !=null) keyWord = cnkiClean.filterChineseAbStr(cnkiClean.cleanKeyWord(keyWord))
-    if(keyWordAlt !="" && keyWordAlt !=null) keyWordAlt = cnkiClean.filterEnglishStr(cnkiClean.cleanKeyWord(keyWordAlt))
-    if( instituteAll!="" && instituteAll !=null) instituteAll = cnkiClean.cleanInstitute(instituteAll)
-    if( journal !="" && journal !=null) journal = cnkiClean.cleanJournal(journal)
-    if( journal2 !="" && journal2 !=null) journal2 = cnkiClean.cleanJournal(journal2)
-    if (journal == null || journal.equals(""))     journal = journal2
-    journal = cnkiOps.cleanJournal(journal)
-    if( institute!="" && institute !=null) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    if(abstractcont !="" && abstractcont !=null) abstractcont = cnkiClean.getChineseAbstract(abstractcont)
-    if(abstractcont_alt !="" && abstractcont_alt !=null) abstractcont_alt = cnkiClean.getEnglishAbstract(abstractcont_alt)
-
-    (id, (id, title, titleAlt, creator, creatorAlt, creatorAll, keyWord, keyWordAlt, institute, instituteAll, year, journal, issue, url,abstractcont,abstractcont_alt,page,subject,doi,issn))
-  }
-  def transformRdd_wf_simplify(r:Row) ={
-    val id = r.getString(r.fieldIndex("GUID"))
-    var creator =r.getString(r.fieldIndex("creator"))
-    var title=r.getString(r.fieldIndex("title"))
-    var journal =r.getString(r.fieldIndex("journal_name"))
-    var journal2 =r.getString(r.fieldIndex("journal_alt"))
-    val year=r.getString(r.fieldIndex("year"))
-    var institute =r.getString(r.fieldIndex("institute"))
-    var issue = r.getString(r.fieldIndex("issue"))
-    var volume = deleteZero.deleteZero(getData.getVolumeWF(issue))
-    issue =deleteZero.deleteZero(getData.getIssueWF(issue))
-    try{
-      if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(creator))
-    }catch {
-      case ex: Exception => logUtil("---transformRdd_wf_simplify. clean author error，错误原因为---" + ex.getMessage)
-        logUtil("------" +id+"-----"+creator)
-    }
-
-    if( title!="" && title !=null ) title = cnkiClean.cleanTitle(title.toUpperCase)
-    if( journal !="" && journal !=null) journal = cnkiClean.cleanJournal(journal)
-    if( journal2 !="" && journal2 !=null) journal2 = cnkiClean.cleanJournal(journal2)
-    if (journal == null || journal.equals(""))     journal = journal2
-    if(institute !="" && institute !=null)      institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    val key = cutStr(title, 6) + cutStr(journal, 4)
-    (key, (title, journal, creator, id,institute,year,issue,volume))
-  }
-
-  def transformRdd_wf_source(r:Row) ={
-    val id = r.getString(r.fieldIndex("GUID"))
-    var title =r.getString(r.fieldIndex("title"))
-    val titleAlt = r.getString(r.fieldIndex("title_alt"))
-    var creator = r.getString(r.fieldIndex("creator"))
-    var creatorAlt = r.getString(r.fieldIndex("creator_all"))
-    var creatorAll = r.getString(r.fieldIndex("creator"))
-    var keyWord = r.getString(r.fieldIndex("keyword"))
-    var keyWordAlt = r.getString(r.fieldIndex("keyword_alt"))
-    val year = r.getString(r.fieldIndex("year"))
-    var journal =r.getString(r.fieldIndex("journal_name"))
-    var journal2 =r.getString(r.fieldIndex("journal_alt"))
-    var institute =r.getString(r.fieldIndex("institute"))
-    var instituteAll = r.getString(r.fieldIndex("institute"))
-    val issue = r.getString(r.fieldIndex("issue"))
-    val url = r.getString(r.fieldIndex("url"))
-    val abstractcont =  r.getString(r.fieldIndex("abstract"))
-    val abstractcont_alt = r.getString(r.fieldIndex("abstract_alt"))
-    val page = ""
-    val subject =r.getString(r.fieldIndex("subject"))
-    var doi = r.getString(r.fieldIndex("doi"))
-    if(doi == null) doi = ""
-    val issn = ""
-
-    if( title!="" && title !=null) title = cnkiClean.cleanTitle( title)
-    try{
-      if( creator!="" && creator !=null) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(creator))
-      if(creatorAlt !="" && creatorAlt !=null) creatorAlt = cnkiClean.cleanAuthor(creatorAlt)
-      if(creatorAll !="" && creatorAll !=null) creatorAll = cnkiClean.cleanAuthor(creatorAll)
-      if(creatorAll == null || creatorAll.equals("")){
-        creatorAll = creator
-      }
-    }catch {
-      case ex: Exception => logUtil("---transformRdd_wf_source. clean author error，错误原因为---" + ex.getMessage)
-        logUtil("------" +id+"-----"+creator)
-    }
-    if(keyWord !="" && keyWord !=null) keyWord = cnkiClean.cleanKeyWord(keyWord)
-    if(keyWordAlt !="" && keyWordAlt !=null) keyWordAlt = cnkiClean.cleanKeyWord(keyWordAlt)
-    if( institute!="" && institute !=null) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(institute))
-    if( instituteAll!="" && instituteAll !=null) instituteAll = cnkiClean.cleanInstitute(instituteAll)
-    if( journal!="" && journal !=null) journal = cnkiClean.cleanUnJournal(journal)
-    if( journal2!="" && journal2 !=null) journal2 = cnkiClean.cleanJournal(journal2)
-    if (journal == null || journal.equals("") ) {
-      journal = journal2
-    }
-
-    (id, (id, title, titleAlt, creator, creatorAlt, creatorAll, keyWord, keyWordAlt, institute, instituteAll, year, journal, issue, url,abstractcont,abstractcont_alt,page,subject,doi,issn))
-  }
 
   /**
     * 作者表数据匹配
@@ -470,33 +239,6 @@ object commonClean {
 
 
 
-  /**
-    * 解析kafka的json数据
-    *
-    * @param jsonMap
-    * @return
-    */
-  def parseVipJson(jsonMap: Map[String, Any]): (String, (String, String, String, String, String,String)) = {
-    var creator = ""
-    var title = ""
-    var journal = ""
-    var id = ""
-    var institute = ""
-    var journal2 = ""
-    var year =""
-    if (isUseful(jsonMap, "guid")) id = jsonMap("guid").toString
-    if (isUseful(jsonMap, "creator_2")) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(jsonMap("creator_2").toString))
-    if (isUseful(jsonMap, "title")) title = cnkiClean.cleanTitle(jsonMap("title").toString)
-    if (isUseful(jsonMap, "journal_2")) journal = cnkiClean.cleanJournal(jsonMap("journal_2").toString)
-    if (isUseful(jsonMap, "journal_name")) journal2 = cnkiClean.cleanJournal(jsonMap("journal_name").toString)
-    if (isUseful(jsonMap, "year")) year =jsonMap("year").toString
-    if (journal == null || journal.equals("")) {
-      journal = journal2
-    }
-    if (isUseful(jsonMap, "institute_2")) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(jsonMap("institute_2").toString))
-    val key = cutStr(title, 6) + cutStr(journal, 4)
-    (key, (title, journal, creator, id, institute,year))
-  }
 
   /**
     * 将原数据解析
@@ -542,82 +284,8 @@ object commonClean {
     (id, (id, title, titleAlt, creator, creatorAlt, creatorAll, keyWord, keyWordAlt, institute, instituteAll, year, journal, issue, url,abstractcont,abstractcont_alt))
   }
 
-  /**
-    * 解析kafka的json数据
-    *
-    * @param jsonMap
-    * @return
-    */
-  def parseWfJson(jsonMap: Map[String, Any]): (String, (String, String, String, String, String,String)) = {
-    var creator = ""
-    var title = ""
-    var journal = ""
-    var id = ""
-    var institute = ""
-    var journal2 = ""
-    var year =""
-    if (isUseful(jsonMap, "guid")) id = jsonMap("guid").toString
-    if (isUseful(jsonMap, "creator")) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(jsonMap("creator").toString))
-    if (isUseful(jsonMap, "title")) title = cnkiClean.cleanTitle(jsonMap("title").toString)
-    if (isUseful(jsonMap, "journal_name")) journal = cnkiClean.cleanJournal(jsonMap("journal_name").toString)
-    if (isUseful(jsonMap, "journal_alt")) journal2 = cnkiClean.cleanJournal(jsonMap("journal_alt").toString)
-    if (isUseful(jsonMap, "year")) year =jsonMap("year").toString
-    if (journal == null || journal.equals("") ) {
-      journal = journal2
-    }
-    if (isUseful(jsonMap, "institute")) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(jsonMap("institute").toString))
-    val key = cutStr(title, 6) + cutStr(journal, 4)
-    (key, (title, journal, creator, id, institute,year))
-  }
 
-  /**
-    * 将原数据解析
-    *
-    * @param jsonMap
-    */
-  def parseWfSourceJson(jsonMap: Map[String, Any]) = {
-    var creator = ""
-    var creatorAll = ""
-    var title = ""
-    var journal = ""
-    var id = ""
-    var institute = ""
-    var abstractcont = ""
-    var abstractcont_alt = ""
-    var titleAlt = ""
-    var creatorAlt = ""
-    var keyWord = ""
-    var keyWordAlt = ""
-    var instituteAll = ""
-    var year = ""
-    var issue = ""
-    var url = ""
-    var journal2 = ""
-    if (isUseful(jsonMap, "guid")) id = jsonMap("guid").toString
-    if (isUseful(jsonMap, "title")) title = cnkiClean.cleanTitle(jsonMap("title").toString)
-    if (isUseful(jsonMap, "title_alt")) titleAlt = jsonMap("title_alt").toString
-    if (isUseful(jsonMap, "creator")) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(jsonMap("creator").toString))
-    if (isUseful(jsonMap, "creator_all")) creatorAlt = cnkiClean.cleanAuthor(jsonMap("creator_all").toString)
-    if (isUseful(jsonMap, "creator")) creatorAll = cnkiClean.cleanAuthor(jsonMap("creator").toString)
-    if(creatorAll == null || creatorAll.equals("")){
-      creatorAll = creator
-    }
-    if (isUseful(jsonMap, "keyword")) keyWord = cnkiClean.cleanKeyWord(jsonMap("keyword").toString)
-    if (isUseful(jsonMap, "keyword_alt")) keyWordAlt = cnkiClean.cleanKeyWord(jsonMap("keyword_alt").toString)
-    if (isUseful(jsonMap, "year")) year = jsonMap("year").toString
-    if (isUseful(jsonMap, "journal_name")) journal = cnkiClean.cleanUnJournal(jsonMap("journal_name").toString)
-    if (isUseful(jsonMap, "journal_alt")) journal2 = cnkiClean.cleanJournal(jsonMap("journal_alt").toString)
-    if (journal == null || journal.equals("") ) {
-      journal = journal2
-    }
-    if (isUseful(jsonMap, "institute")) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(jsonMap("institute").toString))
-    if (isUseful(jsonMap, "institute")) instituteAll = cnkiClean.cleanInstitute(jsonMap("institute").toString)
-    if (isUseful(jsonMap, "issue")) issue = jsonMap("issue").toString
-    if (isUseful(jsonMap, "url")) url = jsonMap("url").toString
-    if (isUseful(jsonMap, "abstract")) abstractcont = jsonMap("abstract").toString
-    if (isUseful(jsonMap, "abstract_alt")) abstractcont_alt = jsonMap("abstract_alt").toString
-    (id, (id, title, titleAlt, creator, creatorAlt, creatorAll, keyWord, keyWordAlt, institute, instituteAll, year, journal, issue, url,abstractcont,abstractcont_alt))
-  }
+
 
   /**
     * 清理 新作者数据
@@ -710,11 +378,11 @@ object commonClean {
     retarray
   }
   /**
-   * 设置数据库数据
-   *
-   * @param stmt
-   * @param f
-   */
+    * 设置数据库数据
+    *
+    * @param stmt
+    * @param f
+    */
   def setData4newdata(stmt: PreparedStatement, f: (String, String, String, String, String, String, String, String, String, String, String, String, String, String, Int, Int, String,String,String,String,String,(String,String,String)), source: Int) = {
     //DataCleanForAll.logUtil("---当前的类型为:---"+source)
     if (insertJudge(f._1))
@@ -980,11 +648,11 @@ object commonClean {
       stmt.setString(20, f._18)
     else stmt.setNull(20, Types.VARCHAR)
     if (insertJudge(f._19))  //abstract
-      //stmt.setString(21, f._19)
+    //stmt.setString(21, f._19)
       stmt.setString(21, "")
     else stmt.setNull(21, Types.VARCHAR)
     if (insertJudge(f._20))  //abstract_alt
-      //stmt.setString(22, f._20)
+    //stmt.setString(22, f._20)
       stmt.setString(22, "")
     else stmt.setNull(22, Types.VARCHAR)
 
@@ -1028,100 +696,11 @@ object commonClean {
   }
 
 
-  /**
-    * 解析kafka的json数据
-    *
-    * @param jsonMap
-    * @return
-    */
-  def parseCnkiJson(jsonMap: Map[String, Any]): (String, (String, String, String, String, String,String)) = {
-    var creator = ""
-    var title = ""
-    var journal = ""
-    var id = ""
-    var institute = ""
-    var journal2 = ""
-    var year =""
-    if (isUseful(jsonMap, "guid")) id = jsonMap("guid").toString
-    if (isUseful(jsonMap, "creator")) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(jsonMap("creator").toString))
-    if (isUseful(jsonMap, "title")) title = cnkiClean.cleanTitle(jsonMap("title").toString)
-    if (isUseful(jsonMap, "journal")) journal = cnkiClean.cleanJournal(jsonMap("journal").toString)
-    if (isUseful(jsonMap, "journal2")) journal2 = cnkiClean.cleanJournal(jsonMap("journal2").toString)
-    if (isUseful(jsonMap, "year")) year =jsonMap("year").toString
-    if (journal == null || journal.equals("")) {
-      journal = journal2
-    }
-    if (isUseful(jsonMap, "institute")) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(jsonMap("institute").toString))
-    val key = cutStr(title, 6) + cutStr(journal, 4)
-    (key, (title, journal, creator, id, institute,year))
-  }
 
-  /**
-    * 将原数据解析
-    *
-    * @param jsonMap
-    */
-  def parseCnkiSourceJson(jsonMap: Map[String, Any]) = {
-    var creator = ""
-    var creatorAll = ""
-    var title = ""
-    var journal = ""
-    var id = ""
-    var institute = ""
-    var abstractcont = ""
-    var abstractcont_alt = ""
-    var titleAlt = ""
-    var creatorAlt = ""
-    var keyWord = ""
-    var keyWordAlt = ""
-    var instituteAll = ""
-    var year = ""
-    var issue = ""
-    var url = ""
-    if (isUseful(jsonMap, "guid")) id = jsonMap("guid").toString
-    if (isUseful(jsonMap, "title")) title = cnkiClean.cleanTitle(jsonMap("title").toString)
-    if (isUseful(jsonMap, "titleAlt")) titleAlt = jsonMap("titleAlt").toString
-    if (isUseful(jsonMap, "creator")) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(jsonMap("creator").toString))
-    if (isUseful(jsonMap, "creator_all")) creatorAlt = cnkiClean.cleanAuthor(jsonMap("creator_all").toString)
-    if (isUseful(jsonMap, "creator")) creatorAll = cnkiClean.cleanAuthor(jsonMap("creator").toString)
-    if (isUseful(jsonMap, "keyword")) keyWord = cnkiClean.cleanKeyWord(jsonMap("keyword").toString)
-    //if (isUseful(jsonMap, "keyword")) keyWordAlt = cnkiClean.cleanKeyWord(jsonMap("keyword").toString)
-    if (isUseful(jsonMap, "instituteAll")) instituteAll = cnkiClean.cleanInstitute(jsonMap("institute").toString)
-    if (isUseful(jsonMap, "year")) year = jsonMap("year").toString
-    if (isUseful(jsonMap, "journal")) journal = cnkiClean.cleanJournal(jsonMap("journal").toString)
-    if (isUseful(jsonMap, "institute")) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(jsonMap("institute").toString))
-    if (isUseful(jsonMap, "issue")) issue = jsonMap("issue").toString
-    if (isUseful(jsonMap, "url")) url = jsonMap("url").toString
-    if (isUseful(jsonMap, "abstract")) abstractcont = jsonMap("abstract").toString
-    if (isUseful(jsonMap, "abstract_alt")) abstractcont_alt = jsonMap("abstract_alt").toString
-    (id, (id, title, titleAlt, creator, creatorAlt, creatorAll, keyWord, keyWordAlt, institute, instituteAll, year, journal, issue, url,abstractcont,abstractcont_alt))
-  }
+
 
 
   def main(args: Array[String]): Unit = {
-    val str = "{\"year\":\"2016\",\"code\":\"670348458\",\"url\":\"http:\\/\\/lib.cqvip.com\\/qk\\/71697X\\/201611\\/670348458.html\",\"catalog\":\"\\u4e2d\\u6587\\u79d1\\u6280\\u671f\\u520a\\u6570\\u636e\\u5e93==>\\u671f\\u520a\\u5bfc\\u822a==>\\u521b\\u65b0\\u4f5c\\u6587\\uff1a\\u5c0f\\u5b663-4\\u5e74\\u7ea7==>2016\\u5e7411\\u671f\",\"title\":\"\\u74f6\\u5b50\\u91cc\\u7684\\u738b\\u5b50\",\"title_alt\":null,\"creator\":\"\\u6881\\u5434\",\"creator_all\":null,\"institute\":\"\\u5e7f\\u897f\\u5357\\u5b81\\u5e02\\u51e4\\u7fd4\\u8def\\u5c0f\\u5b66\\u56db(6)\\u73ed\",\"journal\":\"\\u521b\\u65b0\\u4f5c\\u6587\\uff1a\\u5c0f\\u5b663-4\\u5e74\\u7ea7=>2016\\u5e74\\u7b2c0\\u5377\\u7b2c11\\u671f 34-34\\u9875,\\u51711\\u9875\",\"journal_alt\":null,\"fund\":null,\"abstract\":\"\\u5357\\u65b9\\u8bd7\\u8001\\u5e08\\u7684\\u8bdd\\uff1a\\u5728\\u770b\\u7ae5\\u8bdd\\u300a\\u62c7\\u6307\\u59d1\\u5a18\\u300b\\u7684\\u65f6\\u5019,\\u6211\\u4eec\\u7684\\u8111\\u5b50\\u91cc\\u5c31\\u6709\\u4e86\\u8fd9\\u4e48\\u4e00\\u4e2a\\u5c0f\\u5c0f\\u7684\\u5750\\u5728\\u82b1\\u74e3\\u4e0a\\u7684\\u4eba\\u513f.\\u54a6,\\u8fd9\\u4e2a\\u4e16\\u754c\\u4e0a\\u4f1a\\u4e0d\\u4f1a\\u4e5f\\u6709\\u8fd9\\u4e48\\u4e00\\u4e2a\\u5c0f\\u4eba\\u513f\\u5750\\u5728\\u900f\\u660e\\u7684\\u73bb\\u7483\\u74f6\\u91cc,\\u6f02\\u5728\\u5927\\u6d77\\u4e0a\\u5bfb\\u627e\\u4ed6\\u60f3\\u8981\\u7684\\u5e78\\u798f\\u5462\\uff1f\\u8fd9\\u4e48\\u4e00\\u60f3,\\u5c31\\u6709\\u4e86\\u4e0b\\u9762\\u8fd9\\u4e24\\u4e2a\\u7ae5\\u8bdd\\u6545\\u4e8b.\",\"abstract_alt\":null,\"keyword\":\"\\u738b\\u5b50|!\\u73bb\\u7483\\u74f6|!\\u7ae5\\u8bdd\",\"keyword_alt\":null,\"subject\":\"\\u5206 \\u7c7b \\u53f7\\uff1a TQ171.68 [\\u5de5\\u4e1a\\u6280\\u672f > \\u5316\\u5b66\\u5de5\\u4e1a > \\u7845\\u9178\\u76d0\\u5de5\\u4e1a > \\u73bb\\u7483\\u5de5\\u4e1a > \\u751f\\u4ea7\\u8fc7\\u7a0b\\u4e0e\\u8bbe\\u5907 > \\u5236\\u54c1\\u52a0\\u5de5\\u5de5\\u827a\\uff08\\u518d\\u6210\\u578b\\uff09\\u53ca\\u8bbe\\u5907]\",\"aboutdate\":null,\"creator_intro\":null,\"reference\":\"\",\"similarliterature\":\"\\u74f6\\u5b50\\u91cc\\u7684\\u738b\\u5b50=>\\/qk\\/71697X\\/201611\\/670348458.html;;;\\u4e8c\\u6c27\\u5316\\u949b\\u8584\\u819c\\u7535\\u6781\\u7684\\u5236\\u5907\\u53ca\\u5206\\u6790=>\\/qk\\/96274A\\/201630\\/670260753.html;;;\\u672c\\u520a\\u5f81\\u7a3f\\u542f\\u4e8b=>\\/qk\\/90499X\\/201610\\/670459386.html;;;PLC\\u5728\\u7535\\u6c14\\u81ea\\u52a8\\u63a7\\u5236\\u4e2d\\u7684\\u5e94\\u7528=>\\/qk\\/80675A\\/201621\\/670409427.html;;;Highly Efficient Power Conversion from Salinity Gradients with Ion-Selective Polymeric Nanopores=>\\/qk\\/84212X\\/201609\\/670182018.html;;;\\u8499\\u7802\\u73bb\\u7483\\u7684\\u7814\\u5236\\u4e0e\\u5438\\u5149\\u6548\\u5e94\\u7684\\u8868\\u5f81=>\\/qk\\/95166X\\/201604\\/669477109.html;;;\\u9ad8\\u5f3a\\u5ea6\\u5316\\u5b66\\u94a2\\u5316\\u94a0\\u9499\\u73bb\\u7483\\u201cARMOREX\\uff08R\\uff09\\u201d=>\\/qk\\/91373X\\/201604\\/670200953.html;;;\\u8d85\\u58f0\\u632f\\u52a8\\u94e3\\u524a\\u5149\\u5b66\\u73bb\\u7483\\u6750\\u6599\\u8868\\u9762\\u8d28\\u91cf\\u7814\\u7a76=>\\/qk\\/70459X\\/201617\\/83687174504849544955484953.html;;;High haze textured surface B-doped ZnO-TCO films on wet-chemically etched glass substrates for thin film solar cells=>\\/qk\\/94689X\\/201608\\/669996383.html;;;\\u73bb\\u7483\\u6df1\\u52a0\\u5de5\\u5de5\\u5382\\u7684\\u5de5\\u4e1a4\\uff0e0=>\\/qk\\/97223A\\/201608\\/670219816.html\",\"updatetime\":\"2017-04-24 18:02:48.087\",\"id\":\"236860\",\"journal_name\":\"\\u521b\\u65b0\\u4f5c\\u6587\\uff1a\\u5c0f\\u5b663-4\\u5e74\\u7ea7\",\"creator_2\":\"\\u6881\\u5434\",\"institute_2\":\"\\u5e7f\\u897f\\u5357\\u5b81\\u5e02\\u51e4\\u7fd4\\u8def\\u5c0f\\u5b66\\u56db(6)\\u73ed\",\"journal_2\":\"\\u521b\\u65b0\\u4f5c\\u6587\\uff1a\\u5c0f\\u5b66\\u5e74\\u7ea7\",\"issue\":\"2016\\u5e74\\u7b2c0\\u5377\\u7b2c11\\u671f 34-34\\u9875,\\u51711\\u9875\",\"subject_2\":\"TQ171.68\",\"guid\":\"6C424426-D528-E711-AECF-0050569B7A51\",\"status\":\"1\",\"from\":\"vip\"}"
-    val jsonStr = JSON.parseFull(str)
-    jsonStr match {
-      case Some(jsonMap: Map[String, Any]) => {
-        var creator = ""
-        var title = ""
-        var journal = ""
-        var id = ""
-        var institute = ""
-        var journal2 = ""
-        if (isUseful(jsonMap, "guid")) id = jsonMap("guid").toString
-        if (isUseful(jsonMap, "creator_2")) creator = cnkiClean.getFirstCreator(cnkiClean.cleanAuthor(jsonMap("creator_2").toString))
-        if (isUseful(jsonMap, "title")) title = cnkiClean.cleanTitle(jsonMap("title").toString)
-        if (isUseful(jsonMap, "journal_2")) journal = cnkiClean.cleanJournal(jsonMap("journal_2").toString)
-        if (isUseful(jsonMap, "journal_name")) journal2 = cnkiClean.cleanJournal(jsonMap("journal_name").toString)
-        println(journal)
-        if (journal == null || journal.equals("")) {
-          journal = journal2
-        }
-        if (isUseful(jsonMap, "institute_2")) institute = cnkiClean.getFirstInstitute(cnkiClean.cleanInstitute(jsonMap("institute_2").toString))
-        val key = cutStr(title, 6) + cutStr(journal, 4)
-        println(key + "---" + journal + "---" + creator + "---" + id + "---" + institute)
-      }
-    }
+
   }
 }

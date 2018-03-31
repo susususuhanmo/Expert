@@ -3,7 +3,7 @@ package com.zstu.libdata.StreamSplit.splitAuthor
 import com.github.stuxuhai.jpinyin.{PinyinFormat, PinyinHelper}
 import com.zstu.libdata.StreamSplit.function.CommonTools._
 import com.zstu.libdata.StreamSplit.function.{AddStatus, Filter}
-import com.zstu.libdata.StreamSplit.function.WriteData.writeDataLog
+import com.zstu.libdata.StreamSplit.function.WriteData.writeDataLog196
 import com.zstu.libdata.StreamSplit.function.getFirstLevelOrgan.getFirstLevelOrgan
 import com.zstu.libdata.StreamSplit.function.keywordsOps.isNull
 import org.apache.spark.rdd.RDD
@@ -397,11 +397,11 @@ object splitAuthorFunction {
     //    case class paperAuthor(paperId:String,name: String,organ: String,partOrgan: String,journal: String
     //                           ,isFirst: Boolean,firstLevelOrgan:String,authorId: String)
     val paperAuthorData = hiveContext.createDataFrame(paperAuthorRdd.map(value =>
-      paperAuthor(value._1, value._2, value._3, value._4, value._5,
+      paperAuthor(value._1, value._2, value._3, value._4, cutStr(value._5,500),
         if (value._6 == "0") false else true,
         value._7, value._8)
     ))
-    writeDataLog("t_PaperAuthorLog", paperAuthorData)
+    writeDataLog196("t_PaperAuthorLog", paperAuthorData)
     val paperAuthorId = paperAuthorData.select("authorId")
 
     val finalAuthorDataWithoutStatus = resultAuthorData.join(paperAuthorId,
@@ -410,7 +410,7 @@ object splitAuthorFunction {
       .drop("authorId")
       .distinct()
 val finalAuthorData = AddStatus.addStatus(finalAuthorDataWithoutStatus,hiveContext)
-    writeDataLog("tmp_ExpertLog", finalAuthorData)
+    writeDataLog196("tmp_ExpertLog", finalAuthorData)
 
 
     val candidateResourceRdd = paperAuthorRdd.map(value =>
@@ -418,7 +418,7 @@ val finalAuthorData = AddStatus.addStatus(finalAuthorDataWithoutStatus,hiveConte
     val candidateResourceData = hiveContext.createDataFrame(
       candidateResourceRdd.map(value => candidateResource(value._1, value._2, value._3))
     )
-    writeDataLog("t_CandidateResourceLog", candidateResourceData)
+    writeDataLog196("t_CandidateResourceLog", candidateResourceData)
 
 
 
@@ -427,25 +427,22 @@ val finalAuthorData = AddStatus.addStatus(finalAuthorDataWithoutStatus,hiveConte
     //    (paperId,name,organ,partOrgan,journal,isFirst,firstLevelOrgan
     // ,authorId,any:(keywordNew,keywordAltNew,subjectNew,paperId,journal))
 
-    val keyWord1 = paperAuthorRdd.map(formatForKeyword)
-    val keyWord2 = keyWord1.filter(f => f != null)
-    val keyWord3 = keyWord2.reduceByKey((value1, value2) => value1)
 
-    val keyWord = keyWord3.flatMap(keyWordSplitNew).filter(f => f != null)
-      .map(value =>
-        keyWordData(value._1, value._2, value._3, value._4, value._5, value._6))
-
-
-    //    case class keyWordData(paperid: String,year:String,keyword: String
-    //                           ,keywordAlt: String
-    //                           ,subjectCode: String,subjectName: String)
-
-    val keyWordResultData = hiveContext.createDataFrame(keyWord).drop("year")
-
-    val keyWordResultDataWithYear = keyWordResultData.join(yearData,
-      keyWordResultData("paperid") === yearData("id"), "left")
-      .drop("id").drop("isCheck")
-    writeDataLog("t_KeywordLog", keyWordResultDataWithYear)
+/*************************keyWord旧处理方式*******************************/
+//    val keyWord1 = paperAuthorRdd.map(formatForKeyword)
+//    val keyWord2 = keyWord1.filter(f => f != null)
+//    val keyWord3 = keyWord2.reduceByKey((value1, value2) => value1)
+//
+//    val keyWord = keyWord3.flatMap(keyWordSplitNew).filter(f => f != null)
+//      .map(value =>
+//        keyWordData(value._1, value._2, value._3, value._4, value._5, value._6))
+//    val keyWordResultData = hiveContext.createDataFrame(keyWord).drop("year")
+//
+//    val keyWordResultDataWithYear = keyWordResultData.join(yearData,
+//      keyWordResultData("paperid") === yearData("id"), "left")
+//      .drop("id").drop("isCheck")
+//    writeDataLog196("t_KeywordLog", keyWordResultDataWithYear)
+/*************************************************************/
 
 
 

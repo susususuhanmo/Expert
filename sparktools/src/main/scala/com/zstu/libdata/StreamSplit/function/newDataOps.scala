@@ -377,15 +377,16 @@ object newDataOps {
   case class operateAndSource(operater: Int, source: Int)
 
   def dealNewData0623(fullInputData: DataFrame,
-                      journalMagSourceRdd: RDD[(String, String)],
+//                      journalMagSourceRdd: RDD[(String, String)],
                       simplifiedJournalRdd: RDD[(String, (String, String, String, String, String, String, String, String))],
                       types: Int,
                       inputJoinJournalRdd: RDD[(String, ((String, String, String, String, String, String, String, String), Option[(String, String, String, String, String, String, String, String)]))],
                       authorRdd: RDD[((String, String), Any)],
                       CLCRdd: (RDD[(String, (String, String))]),
                       hiveContext: HiveContext
-                      , forSplitRdd: RDD[(String, ((String, String), (String, String, String, String, String)))],
-                      universityData: DataFrame): RDD[((String, String), Any)]
+                      , forSplitRdd: RDD[(String, ((String, String), (String, String, String, String, String)))]
+                      , universityData: DataFrame
+                     ): RDD[((String, String), Any)]
 
   = {
 
@@ -427,7 +428,7 @@ object newDataOps {
     ))
     //入库(完整字段）
 
-    val magData = getData.getMagData(hiveContext: HiveContext)
+//    val magData = getData.getMagData(hiveContext: HiveContext)
 //    val coreData = getData.getCoreData(hiveContext: HiveContext)
 
     val noMatchFullData = fullInputData.join(resultNomatchData,
@@ -486,7 +487,7 @@ object newDataOps {
 
     //    WriteData.writeDataStream("t_JournalLog",resultData)
 
-    WriteData.writeDataLog("tmp_JournalLog", resultData)
+    WriteData.writeDataLog196("tmp_JournalLog", resultData)
 //    WriteData.writeDataLog("test_JournalLog", resultData)
 
 
